@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WealthViz Pro — Curated Benchmark &amp; 3D Data Visualization Lab</title>
+  <meta name="description" content="Object-Oriented Programming and Data Visualization dashboard showcasing curated global billionaire benchmarks, interactive vector symbols, and an interactive 3D transformation engine."/>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css"/>
+
+  <!-- Optional CDN Chart.js (with built-in offline Canvas CG fallback if disconnected) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- TOP NAVIGATION BAR -->
+<header class="navbar" role="banner">
+  <button id="mobileMenuToggle" class="mobile-toggle" aria-label="Toggle navigation menu" aria-expanded="false">☰</button>
+  <a href="#" class="logo" aria-label="WealthViz Pro Home"><span>◈</span> WealthViz Pro</a>
+
+  <nav class="nav-links" aria-label="Primary navigation">
+    <button class="nav-btn active" data-view="home">Dashboard</button>
+    <button class="nav-btn" data-view="billionaires">Top 100 Billionaires</button>
+    <button class="nav-btn" data-view="countries">By Country</button>
+    <button class="nav-btn" data-view="companies">Top Companies</button>
+    <button class="nav-btn" data-view="cg">📊 Visualization &amp; 3D Lab</button>
+  </nav>
+
+  <div class="search-box" role="search">
+    <input type="text" id="searchInput" placeholder="Search Musk, AAPL, India..." autocomplete="off" aria-label="Search billionaires and companies" aria-autocomplete="list"/>
+    <div id="searchResults" class="search-results hidden" role="listbox"></div>
+  </div>
+
+  <div class="nav-controls">
+    <!-- Currency Toggle -->
+    <select id="currencySelect" class="select-control" aria-label="Select currency">
+      <option value="USD">USD ($)</option>
+      <option value="EUR">EUR (€)</option>
+      <option value="INR">INR (₹)</option>
+      <option value="GBP">GBP (£)</option>
+    </select>
+
+    <!-- Theme Toggle -->
+    <button id="themeToggle" class="theme-btn" aria-label="Toggle dark and light theme">🌙 Dark</button>
+
+    <!-- Simulated Live Status Badge -->
+    <div class="live-indicator" title="Fluctuations are generated via simulated random walk drift (±0.3% to ±0.6% drift per tick) for educational demonstration.">
+      <span class="live-dot" aria-hidden="true"></span>
+      <span id="lastUpdate">Simulated Live</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- QUICK SIDEBAR MENU -->
+  <aside class="sidebar" role="navigation" aria-label="Sidebar navigation">
+    <div class="side-title">Quick Menu</div>
+    <button class="side-btn active" data-view="home">🏠 Dashboard</button>
+    <button class="side-btn" data-view="billionaires">👑 Top 100 Billionaires</button>
+    <button class="side-btn" data-view="countries">🌍 Wealth by Country</button>
+    <button class="side-btn" data-view="companies">📈 Top Companies</button>
+    <button class="side-btn" data-view="cg">📊 Visualization &amp; 3D Lab</button>
+
+    <div style="margin-top:2rem;padding:0.8rem;background:var(--panel);border:1px solid var(--border);border-radius:12px;font-size:0.75rem;line-height:1.5;color:var(--muted)">
+      <strong style="color:var(--text)">Dataset Transparency</strong><br/>
+      Reference Benchmark: Oct 2024.<br/>
+      Market drift is simulated in real-time.
+    </div>
+  </aside>
+
+  <!-- MAIN VIEW CONTAINER -->
+  <main class="content" role="main">
+
+    <!-- VIEW: HOME DASHBOARD -->
+    <section id="view-home" class="view active" aria-labelledby="homeTitle">
+      <h1 id="homeTitle" style="font-size:1.3rem;margin-bottom:1.1rem;font-weight:700">Financial Intelligence Overview</h1>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="num" id="statTotal">100</div>
+          <div class="lbl">Billionaires Tracked</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="statWealth">$0T</div>
+          <div class="lbl">Combined Wealth</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="statCompanies">15</div>
+          <div class="lbl">Global Enterprises</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="statCountries">0</div>
+          <div class="lbl">Countries Represented</div>
+        </div>
+      </div>
+
+      <!-- Top 10 Billionaires Panel -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Top 10 Global Billionaires <span class="badge badge-gold">Benchmark</span></h2>
+          <span style="font-size:0.8rem;color:var(--muted)">Click column header to sort</span>
+        </div>
+        <div class="table-wrap" style="max-height:430px">
+          <table data-table-key="homeB">
+            <thead>
+              <tr>
+                <th data-sort="rank" class="sorted-asc">#</th>
+                <th data-sort="name">Name</th>
+                <th data-sort="worth">Net Worth</th>
+                <th data-sort="change">24h Simulated Change</th>
+                <th data-sort="source">Source</th>
+                <th data-sort="country">Country</th>
+              </tr>
+            </thead>
+            <tbody id="homeTop10"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Top Companies Panel -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Top Global Enterprises <span class="badge badge-blue">Finance</span></h2>
+          <span style="font-size:0.8rem;color:var(--muted)">Click column header to sort</span>
+        </div>
+        <div class="table-wrap" style="max-height:330px">
+          <table data-table-key="homeC">
+            <thead>
+              <tr>
+                <th data-sort="name">Ticker</th>
+                <th data-sort="name">Company</th>
+                <th data-sort="price">Price</th>
+                <th data-sort="change">Simulated 24h</th>
+                <th data-sort="marketCap" class="sorted-desc">Mkt Cap</th>
+                <th data-sort="source">CEO</th>
+                <th data-sort="source">Sector</th>
+              </tr>
+            </thead>
+            <tbody id="homeCompanies"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: ALL BILLIONAIRES (~100) -->
+    <section id="view-billionaires" class="view" aria-labelledby="allBTitle">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2 id="allBTitle">Sample dataset: Top 100 Billionaires <span class="badge badge-gold">Curated Benchmark</span></h2>
+            <div style="font-size:0.78rem;color:var(--muted);margin-top:0.2rem">
+              Monotonically sorted reference dataset as of October 2024. Click headers to sort by Rank, Name, Worth, or Country.
+            </div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table data-table-key="allB">
+            <thead>
+              <tr>
+                <th data-sort="rank" class="sorted-asc">#</th>
+                <th data-sort="name">Name</th>
+                <th data-sort="worth">Net Worth</th>
+                <th data-sort="change">24h Simulated Change</th>
+                <th data-sort="source">Primary Source</th>
+                <th data-sort="country">Country</th>
+              </tr>
+            </thead>
+            <tbody id="allBillionaires"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: BY COUNTRY -->
+    <section id="view-countries" class="view" aria-labelledby="countryTitle">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 id="countryTitle">Top Billionaires by Country <span class="badge badge-pink">Segmented</span></h2>
+          <div style="display:flex;align-items:center;gap:0.6rem">
+            <label for="countrySelect" style="font-size:0.82rem;color:var(--muted);font-weight:600">Select Nation:</label>
+            <select id="countrySelect" class="select-control"></select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table data-table-key="countryB">
+            <thead>
+              <tr>
+                <th data-sort="rank" class="sorted-asc">National Rank</th>
+                <th data-sort="name">Name</th>
+                <th data-sort="worth">Net Worth</th>
+                <th data-sort="change">24h Simulated Change</th>
+                <th data-sort="source">Source</th>
+                <th data-sort="country">Country</th>
+              </tr>
+            </thead>
+            <tbody id="countryTop10"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- FEATURE: Data Visualization Wealth by Country Donut -->
+      <div class="cg-section">
+        <h3>🌍 Data Visualization — Global Wealth Distribution Donut</h3>
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">
+          Polar coordinate arc segmentation rendered on HTML5 Canvas 2D. Displays cumulative billionaire net worth per economic region.
+        </p>
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:1rem;display:flex;justify-content:center;align-items:center;overflow-x:auto">
+          <canvas id="cvCountryDonut" width="380" height="260" aria-label="Global wealth distribution by country interactive donut chart" role="img"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: TOP COMPANIES -->
+    <section id="view-companies" class="view" aria-labelledby="compTitle">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 id="compTitle">Top 15 Global Enterprises <span class="badge badge-blue">Corporate</span></h2>
+          <span style="font-size:0.8rem;color:var(--muted)">Reliance price reflects native INR converted via multi-currency engine</span>
+        </div>
+        <div class="table-wrap">
+          <table data-table-key="allC">
+            <thead>
+              <tr>
+                <th data-sort="name">Ticker</th>
+                <th data-sort="name">Company Name</th>
+                <th data-sort="price">Price</th>
+                <th data-sort="change">Simulated 24h</th>
+                <th data-sort="marketCap" class="sorted-desc">Market Cap</th>
+                <th data-sort="source">CEO</th>
+                <th data-sort="source">Sector</th>
+              </tr>
+            </thead>
+            <tbody id="allCompanies"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: DATA VISUALIZATION & 3D INTERACTIVE LAB -->
+    <section id="view-cg" class="view" aria-labelledby="cgTitle">
+      <!-- 2D Vector Emblems Section -->
+      <div class="cg-section">
+        <h3 id="cgTitle">🏢 Data Visualization — Vector Brand Symbols &amp; Parametric Curves</h3>
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">
+          Financial data visualized via HTML5 Canvas:
+          Strategy-pattern vector brand emblems (Apple logo bite carved via <code>globalCompositeOperation = "destination-out"</code>), quadratic Bézier curve smoothing through midpoints, dynamic valuation gauges scaled to dataset peak, and animated pulsing endpoints.
+          <br/><span style="font-size:0.75rem;color:var(--gold)">Simulated Data Engine: Fluctuation drifts are simulated in real-time.</span>
+        </p>
+        <div class="company-cg-grid" id="companySymbolsGrid">
+          <!-- Dynamically populated cards with Canvas 2D graphics -->
+        </div>
+      </div>
+
+      <!-- Market Cap Bar Visualizer -->
+      <div class="cg-section">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.8rem;margin-bottom:0.8rem">
+          <h3 style="margin-bottom:0">📊 Data Visualization — Market Cap &amp; Valuation Visualizer</h3>
+          <!-- DYNAMIC SECTOR FILTERS: Generated dynamically from company data (including Automotive & Conglomerate) -->
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap" id="cgSectorFilters" role="toolbar" aria-label="Filter companies by sector"></div>
+        </div>
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.9rem">
+          Proportional market capitalization bars rendered on Canvas 2D with sector gradient lighting. Precise hover detection scaled across all resolutions via <code>y · (340 / rect.height)</code>.
+        </p>
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:0.8rem;overflow-x:auto">
+          <canvas id="cvCompanyMarket" width="940" height="340" style="width:100%;max-width:940px;height:auto;display:block;margin:0 auto;cursor:pointer" aria-label="Market capitalization bar chart visualizer" role="img"></canvas>
+        </div>
+      </div>
+
+
+    </section>
+
+  </main>
+</div>
+
+<!-- ACCESSIBLE DETAIL MODAL -->
+<div id="detailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-content">
+    <button class="close-btn" id="closeModal" aria-label="Close detail modal">×</button>
+    <div id="detailBody"></div>
+    <div class="chart-container">
+      <canvas id="detailChart" aria-label="Historical price and valuation trend" role="img"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER WITH HONESTY & TRADEMARK DISCLAIMERS -->
+<footer class="footer" role="contentinfo">
+  <p><span>WealthViz Pro</span> · Advanced OOP &amp; Data Visualization Mini Project · No Login Required</p>
+  <p style="margin-top:0.3rem">
+    Reference Benchmark: October 2024 · Sources: Curated public SEC filings, Bloomberg Index &amp; Forbes estimates.
+  </p>
+  <p class="trademark-notice">
+    Trademark Notice: All corporate brand names, tickers, and vector emblem symbols (Apple, Microsoft, NVIDIA, Google, Amazon, Meta, Tesla, Berkshire, TSMC, Eli Lilly, Visa, JPMorgan, ExxonMobil, Reliance, Oracle) are trademarks of their respective owners and are synthesized here solely for educational / Data Visualization demonstration.
+  </p>
+</footer>
+
+<!-- SCRIPTS LOADED IN ARCHITECTURAL ORDER -->
+<script src="data.js"></script>
+<script src="models.js"></script>
+<script src="service.js"></script>
+<script src="algorithms.js"></script>
+<script src="graphics.js"></script>
+<script src="lab3d.js"></script>
+<script src="controller.js"></script>
+
+<script>
+  // Application Entry Point
+  document.addEventListener("DOMContentLoaded", () => {
+    const svc = new MarketDataService();
+    window.dashboard = new DashboardController(svc);
+  });
+</script>
+
+</body>
+</html>
